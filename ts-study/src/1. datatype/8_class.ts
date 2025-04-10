@@ -49,17 +49,142 @@ class Customer {
         this.age = age;
         this.menu = menu;
         this.money = money;
+        console.log(`------------------------------${this.name}님이 입장!!`);
+        
     }
     // function
-    order() : void {
-        console.log(`나이 ${this.age}, ${this.name}이 ${this.menu.name}주문을 ${this.menu.price}원 내고 한다. 지갑에는 ${this.money}원 있다.`);
-    };
+    addExtraCharge(money:number):void{
+        this.money += money;
+        console.log(`${this.name} >>> 금액 충전 완료!.`);
+        
+    }
+    receiveOrderMenu(orderMenu:string):void{
+        console.log(`${this.name} >>> 감사합니다.`);
+        console.log(`------------------------------${this.name}님이 퇴장!!`);
+        
+    }
+
 }
 
-// 인스턴스 생성
-const hong:Customer = new Customer("홍길동", 30, new Menu("아이스아메리카노", 100), 5000);
-console.log(hong.name); //홍길동
-console.log(hong.age); //30
-console.log(hong.menu); //Menu { name: '아이스아메리카노', price: 100 }
-console.log(hong.money); //5000
-hong.order(); // 나이 30, 홍길동이 아이스아메리카노주문을 100원 내고 한다. 지갑에는 5000원 있다.
+// 카페(Cafe) 클래스 선언
+class Cafe {
+    name:string;
+    menus:Menu[];
+    orderMenu ?: Menu;
+    constructor(name:string, menus:Menu[]){
+        this.name = name;
+        this.menus = menus;
+        console.log(`(((((((((((((((((((((((((((((((((((((((())))))))))))))))))))))))))))))))))))))))`);
+        console.log(`\t ${this.name} 영업 시작`);
+        console.log(`(((((((((((((((((((((((((((((((((((((((())))))))))))))))))))))))))))))))))))))))`);
+        this.showMenu();
+    }
+
+    showMenu():void {
+        console.log(`------------------------------메뉴리스트------------------------------------`);
+        console.log(`번호\t메뉴명\t메뉴가격`);
+        console.log(`---------------------------------------------------------------------------`);
+        this.menus && this.menus.map((menu, index) => {
+            menu.name.length > 5 ? console.log(`${index+1}\t${menu.name}\t${menu.price}`)
+            :console.log(`${index+1}\t${menu.name}\t\t${menu.price}`)
+        });
+        console.log(`---------------------------------------------------------------------------`);
+
+    }
+    takeOrder(name:string, orderMenu:Menu, payment:number): boolean{
+        // 4. 주문확인 - 주문메뉴, 결제금액 확인 ( 반복작업 )
+        // 결제 불가 -> 결제 금액 부족 메시지 전달
+        // 결제 가능 -> 5번 실행
+        this.orderMenu = orderMenu;
+        let orderCheckResult:boolean = false;
+        const omenu = this.menus.find((menu) => {menu.name === orderMenu.name});
+
+        if(payment >= orderMenu.price)   {
+            console.log(`${name}님주문이 완료되었습니다. 잠시만 기다려 주세요~`);
+            this.makeMenu(name);
+            orderCheckResult = true;
+        }else{
+            console.log(`${this.name} >> ${name}님 결제 금액이 ${orderMenu.price - payment}원만큼 부족합니다.`);
+        }
+        return orderCheckResult;
+    }
+    // 5번 메뉴 제조
+    makeMenu(name:string) :void{
+        console.log(`${this.name} >> 메뉴 제조 중.....`);
+        console.log(`${this.name} >>> ${name}님 음료가 준비되었습니다.`);
+    }
+    
+    getOrderMenu(): string{
+        const menuName: string = this.orderMenu ? this.orderMenu.name : "";
+        return menuName;
+    }
+}
+
+
+
+
+
+// 인스턴스(객체) 생성
+// 0. 메뉴판 생성
+const menuData:{name:string, price:number}[] = [
+    {name:"아메리카노", price:1700},
+    {name:"아이스아메리카노", price:2000},
+    {name:"바닐라라떼", price:3000},
+];
+const menus:Menu[] = menuData.map((menu) => {return new Menu(menu.name, menu.price)}); // map의 리턴타입 []
+
+// 1. 메가커피 영업 시작 ==> 메뉴판 출력
+const megaCafe:Cafe = new Cafe("메가커피☕", menus);
+
+// 2. 고객 입장
+const busangKill:Customer = new Customer("부상길😀", 40, new Menu("아이스아메리카노", 2000), 1000);
+
+// 3~5. 메뉴 선택 후 주문 : 고객 <---> 카페 
+let orderFlag = true;
+while(orderFlag){
+    if (megaCafe.takeOrder(busangKill.name, busangKill.menu, busangKill.money)){ // 결제 성공
+        orderFlag = false;
+    }else{ // 결제 금액 부족 --> 고객이 추가 지불
+        busangKill.addExtraCharge(200);
+        console.log(`충전 완료`);
+        
+    };
+}
+// 6. 부상길씨가 받고 퇴장
+busangKill.receiveOrderMenu(megaCafe.getOrderMenu());
+
+
+
+// 부상길(아이스아메리카노), 오애순(바닐라라떼), 양관식(아메리카노)
+const customers:{name:string, age:number, menu:Menu, money:number}[] = [
+    {name:'부상길', age:40, menu:new Menu(menuData[0].name, menuData[0].price), money:1000},
+    {name:'오애순', age:32, menu:new Menu(menuData[2].name,  menuData[0].price ), money:5000},
+    {name:'양관식', age:30, menu:new Menu(menuData[1].name,  menuData[1].price ), money:4000},
+]
+
+customers.map((customerData) => {
+    const customer:Customer = new Customer(customerData.name, customerData.age, customerData.menu, customerData.money);
+
+    let orderFlag = true;
+    while(orderFlag){
+        if (megaCafe.takeOrder(customer.name, customer.menu, customer.money)){ // 결제 성공
+            orderFlag = false;
+        }else{ // 결제 금액 부족 --> 고객이 추가 지불
+            customer.addExtraCharge(200);
+            console.log(`충전 완료`);
+            
+        };
+    }
+    // 고객이 받고 퇴장
+    customer.receiveOrderMenu(megaCafe.getOrderMenu());
+})
+
+// 부상길씨가 출근 전 메가커피에서 아이스아메리카노를 주문한다.
+// 1. 메가커피 영업 시작 --> 메뉴판 출력
+// 2. 고객이 입장
+// 3. 메뉴 선택 후 주문
+// 4. 주문확인 - 주문메뉴, 결제금액 확인
+//       결제 불가 --> 금액 부족 메시지 전달
+//       결제 가능 --> 5번 실행
+// 5. 주문 메뉴 제조 --> 메뉴 완료 메시지 전달
+// 6. 고객이 받고 퇴장
